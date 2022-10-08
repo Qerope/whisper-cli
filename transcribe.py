@@ -4,6 +4,11 @@ import subprocess
 import tempfile
 import whisper
 
+def fmt_ts(t, sep=','):
+    h, rem = divmod(t, 3600)
+    m, s = divmod(rem, 60)
+    return '%02d:%02d:%06.3f' % (h, m, s) if sep == '.' else \
+        ('%02d:%02d:%02d,%03d' % (h, m, int(s), round((s - int(s)) * 1000)))
 
 def to_wav(path, out):
     subprocess.run(['ffmpeg', '-y', '-i', path, '-ar', '16000', '-ac', '1', out],
@@ -22,6 +27,9 @@ def main():
     result = model.transcribe(wav)
     segments = result['segments']
     print(result['text'])
+    with open(base + '.srt', 'w') as f:
+        for i, (a, b, text) in enumerate(segments, 1):
+            f.write('%d\n%s --> %s\n%s\n\n' % (i, fmt_ts(a), fmt_ts(b), text.strip()))
 
 
 if __name__ == '__main__':
