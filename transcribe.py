@@ -17,9 +17,11 @@ def to_wav(path, out):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('input')
+    ap.add_argument('--model', default='base')
     args = ap.parse_args()
 
     model = whisper.load_model('base')
+    model = whisper.load_model(args.model)
     base = os.path.splitext(args.input)[0]
     tmp = tempfile.mkdtemp()
     wav = os.path.join(tmp, 'in.wav')
