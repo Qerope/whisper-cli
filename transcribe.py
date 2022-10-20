@@ -2,6 +2,7 @@ import argparse
 import os
 import subprocess
 import tempfile
+import math
 import whisper
 
 def fmt_ts(t, sep=','):
@@ -13,6 +14,22 @@ def fmt_ts(t, sep=','):
 def to_wav(path, out):
     subprocess.run(['ffmpeg', '-y', '-i', path, '-ar', '16000', '-ac', '1', out],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def duration(path):
+    out = subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                                   '-of', 'default=nw=1:nk=1', path])
+    return float(out)
+
+
+def split(wav, chunk, outdir):
+    total = duration(wav)
+    parts = []
+    for i in range(math.ceil(total / chunk)):
+        part = os.path.join(outdir, 'part%03d.wav' % i)
+        subprocess.run(['ffmpeg', '-y', '-ss', str(i * chunk), '-t', str(chunk), '-i', wav, part],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        parts.append((i * chunk, part))
+    return parts
 
 def main():
     ap = argparse.ArgumentParser()
@@ -26,9 +43,11 @@ def main():
     tmp = tempfile.mkdtemp()
     wav = os.path.join(tmp, 'in.wav')
     to_wav(args.input, wav)
-    result = model.transcribe(wav)
-    segments = result['segments']
-    print(result['text'])
+    segments = []
+    for offset, part in split(wav, 600, tmp):
+        res = model.transcribe(part)
+        for seg in res['segments']:
+            segments.append((seg['start'] + offset + offset, seg['end'] + offset, seg['text']))
     with open(base + '.srt', 'w') as f:
         for i, (a, b, text) in enumerate(segments, 1):
             f.write('%d\n%s --> %s\n%s\n\n' % (i, fmt_ts(a), fmt_ts(b), text.strip()))
