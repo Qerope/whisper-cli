@@ -47,7 +47,7 @@ def main():
     for offset, part in split(wav, 600, tmp):
         res = model.transcribe(part)
         for seg in res['segments']:
-            segments.append((seg['start'] + offset + offset, seg['end'] + offset, seg['text']))
+            segments.append((seg['start'] + offset, seg['end'] + offset, seg['text']))
     with open(base + '.srt', 'w') as f:
         for i, (a, b, text) in enumerate(segments, 1):
             f.write('%d\n%s --> %s\n%s\n\n' % (i, fmt_ts(a), fmt_ts(b), text.strip()))
