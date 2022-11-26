@@ -35,6 +35,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('input')
     ap.add_argument('--model', default='base')
+    ap.add_argument('--language')
     args = ap.parse_args()
 
     model = whisper.load_model('base')
