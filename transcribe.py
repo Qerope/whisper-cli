@@ -3,7 +3,7 @@ import os
 import subprocess
 import tempfile
 import math
-import whisper
+from faster_whisper import WhisperModel
 
 def fmt_ts(t, sep=','):
     h, rem = divmod(t, 3600)
@@ -38,18 +38,18 @@ def main():
     ap.add_argument('--language')
     args = ap.parse_args()
 
-    model = whisper.load_model('base')
-    model = whisper.load_model(args.model)
+    model = WhisperModel(args.model, device='cpu', compute_type='float32')
     base = os.path.splitext(args.input)[0]
     tmp = tempfile.mkdtemp()
     wav = os.path.join(tmp, 'in.wav')
     to_wav(args.input, wav)
     segments = []
     for offset, part in split(wav, 600, tmp):
-        res = model.transcribe(part)
-        for seg in res['segments']:
-            segments.append((seg['start'] + offset, seg['end'] + offset, seg['text']))
-        print('chunk at %ds done' % offset)
+        it, info = model.transcribe(part, language=args.language
+            )
+        for seg in it:
+            segments.append((seg.start + offset, seg.end + offset, seg.text.strip()))
+        print('chunk at %ds done' % offset, flush=True)
     with open(base + '.srt', 'w') as f:
         for i, (a, b, text) in enumerate(segments, 1):
             f.write('%d\n%s --> %s\n%s\n\n' % (i, fmt_ts(a), fmt_ts(b), text.strip()))
