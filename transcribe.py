@@ -38,7 +38,7 @@ def main():
     ap.add_argument('--language')
     args = ap.parse_args()
 
-    model = WhisperModel(args.model, device='cpu', compute_type='float32')
+    model = WhisperModel(args.model, device='cpu', compute_type='int8')
     base = os.path.splitext(args.input)[0]
     tmp = tempfile.mkdtemp()
     wav = os.path.join(tmp, 'in.wav')
