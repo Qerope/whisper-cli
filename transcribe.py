@@ -46,6 +46,7 @@ def main():
     segments = []
     for offset, part in split(wav, 600, tmp):
         it, info = model.transcribe(part, language=args.language
+            , vad_filter=True
             )
         for seg in it:
             segments.append((seg.start + offset, seg.end + offset, seg.text.strip()))
