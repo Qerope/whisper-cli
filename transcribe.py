@@ -54,6 +54,12 @@ def main():
     with open(base + '.srt', 'w') as f:
         for i, (a, b, text) in enumerate(segments, 1):
             f.write('%d\n%s --> %s\n%s\n\n' % (i, fmt_ts(a), fmt_ts(b), text.strip()))
+    with open(base + '.vtt', 'w') as f:
+        f.write('WEBVTT\n\n')
+        for a, b, text in segments:
+            f.write('%s --> %s\n%s\n\n' % (fmt_ts(a, '.'), fmt_ts(b, '.'), text.strip()))
+    with open(base + '.txt', 'w') as f:
+        f.write(' '.join(t.strip() for _, _, t in segments) + '\n')
 
 
 if __name__ == '__main__':
